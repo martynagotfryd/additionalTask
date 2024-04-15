@@ -1,75 +1,76 @@
-def initialize_board(size):
+def create_board(size):
     return [[" " for _ in range(size)] for _ in range(size)]
-
 
 def print_board(board):
     size = len(board)
-    for row in board:
-        print("__" + "__|__".join(row) + "__")
-        print("  " + "  |  " * size)
-    print("\n")
+    # The horizontal separator
+    horizontal_sep = " ---" * size
+    # Print the top border
+    print(horizontal_sep)
+    for row in range(size):
+        # Print the row with vertical separators
+        print("| " + " | ".join(board[row]) + " |")
+        # Print the horizontal separator after each row
+        print(horizontal_sep)
 
-
-def check_win(board, player_symbol):
+def check_win(board, player, row, col):
     size = len(board)
-    # Check horizontal and vertical lines
-    for i in range(size):
-        if all(board[i][j] == player_symbol for j in range(size)) or all(
-                board[j][i] == player_symbol for j in range(size)):
-            return True
-    # Check diagonals
-    if all(board[i][i] == player_symbol for i in range(size)) or all(
-            board[i][size - 1 - i] == player_symbol for i in range(size)):
+    # Check row
+    if all(board[row][c] == player for c in range(size)):
+        return True
+    # Check column
+    if all(board[r][col] == player for r in range(size)):
+        return True
+    # Check diagonal
+    if row == col and all(board[i][i] == player for i in range(size)):
+        return True
+    if row + col == size - 1 and all(board[i][size - 1 - i] == player for i in range(size)):
         return True
     return False
 
-
-def is_board_full(board):
-    return all(cell != " " for row in board for cell in row)
-
+def check_draw(board):
+    return all(all(cell != " " for cell in row) for row in board)
 
 def main():
-    size = int(input("Enter the size of the board (5 to 25): "))
-    if not (5 <= size <= 25):
-        print("Invalid size. Using default 5x5.")
-        size = 5
+    num_players = int(input("Enter number of players (2-4): "))
+    while num_players not in range(2, 5):
+        num_players = int(input("Invalid number. Enter number of players (2-4): "))
 
-    num_players = int(input("Enter number of players (2 to 4): "))
-    if not (2 <= num_players <= 4):
-        print("Invalid number of players. Using 2 players.")
-        num_players = 2
+    symbols = ['X', 'O', '#', '@']
+    player_names = [input(f"Enter player {i + 1} name: ") for i in range(num_players)]
+    grid_size = int(input("Enter grid size (5-25): "))
+    while grid_size < 5 or grid_size > 25:
+        grid_size = int(input("Invalid size. Enter grid size (5-25): "))
 
-    symbols = ["X", "O", "#", "@"]
-    players = [input(f"Enter player {i + 1} name: ") for i in range(num_players)]
-    player_symbols = symbols[:num_players]
-
-    board = initialize_board(size)
-    current_player = 0
-
+    board = create_board(grid_size)
+    player_turn = 0
     while True:
         print_board(board)
-        print(f"{players[current_player]}'s turn ({player_symbols[current_player]}): ")
-        try:
-            x, y = map(int, input("Enter row and column numbers (e.g., 1 2 for row 1, column 2): ").split())
-            if board[x - 1][y - 1] != " ":
-                print("Cell is already taken. Choose another cell.")
-                continue
-        except (ValueError, IndexError):
-            print("Invalid input. Please enter row and column numbers within the grid size.")
-            continue
+        current_player = player_turn % num_players
+        print(f"{player_names[current_player]}'s turn ({symbols[current_player]}):")
 
-        board[x - 1][y - 1] = player_symbols[current_player]
-        if check_win(board, player_symbols[current_player]):
+        valid_move = False
+        while not valid_move:
+            try:
+                row, col = map(int, input("Enter row and column numbers (e.g., 1 2): ").split())
+                if board[row][col] == " ":
+                    board[row][col] = symbols[current_player]
+                    valid_move = True
+                else:
+                    print("Cell is already taken. Please try again.")
+            except (IndexError, ValueError):
+                print("Invalid input. Please try again.")
+
+        if check_win(board, symbols[current_player], row, col):
             print_board(board)
-            print(f"{players[current_player]} wins!")
+            print(f"Congratulations, {player_names[current_player]} wins!")
             break
-        if is_board_full(board):
+        if check_draw(board):
             print_board(board)
-            print("It's a draw!")
+            print("The game is a draw.")
             break
 
-        current_player = (current_player + 1) % num_players
-
+        player_turn += 1
 
 if __name__ == "__main__":
     main()
